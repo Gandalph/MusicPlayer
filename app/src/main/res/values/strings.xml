@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MusicPlayer</string>
+    <string name="title_activity_list_songs">Lista pesama</string>
+</resources>
