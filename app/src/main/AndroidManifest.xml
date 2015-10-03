@@ -18,9 +18,9 @@
             <meta-data android:name="android.support.PARENT_ACTIVITY"
                        android:value=".ListSongsActivity"/>
 
-            <service android:name=".MusicService" />
         </activity>
 
+        <service android:name="com.gandalf.musicplayer.MusicService" />
 
         <activity
             android:name=".ListSongsActivity"

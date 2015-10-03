@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 public class MusicPlayerFragment extends Fragment implements View.OnClickListener {
@@ -22,12 +23,12 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
     MusicService.MusicBinder mBinder;
     boolean isBound = false;
     String mSongPath;
+    SeekBar mTimeElapsed;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "Bound: " + isBound);
         if(!isBound) {
             Log.d(TAG, "binding service");
             mSongPath = getArguments().getString(EXTRA_SONG_PATH);
@@ -35,6 +36,12 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
             Intent i = new Intent(getActivity(), MusicService.class);
             getActivity().bindService(i, mServiceConection, Context.BIND_AUTO_CREATE);
         }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -51,6 +58,9 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
         Button mNextTrack = (Button) v.findViewById(R.id.next_track);
         mNextTrack.setOnClickListener(this);
 
+        mTimeElapsed = (SeekBar) v.findViewById(R.id.time_elapsed_seekBar);
+        mTimeElapsed.setClickable(false);
+
         return v;
     }
 
@@ -60,6 +70,8 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
             mBinder = (MusicService.MusicBinder) service;
             mMusicService = (MusicService) mBinder.getService();
             isBound = true;
+            mMusicService.setTrack(mSongPath);
+            mBinder.setFragment(MusicPlayerFragment.this);
             Log.d(TAG, "connected");
         }
 
@@ -82,7 +94,6 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
                 mMusicService.pauseTrack();
                 break;
             case R.id.play:
-                if(mMusicService == null) Log.d(TAG, "music service null");
                 mMusicService.playTrack();
                 break;
             case R.id.next_track:
@@ -91,13 +102,22 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
         }
     }
 
+    public void setMaxSeekBar(int duration) {
+        mTimeElapsed.setMax(duration);
+    }
+
+    public void updateSeekBar(int currentTime) {
+        mTimeElapsed.setProgress(mTimeElapsed.getMax() < currentTime ? mTimeElapsed.getMax() : currentTime);
+    }
+
     @Override
-    public void onStop() {
-        super.onStop();
-        if(isBound)
-            mMusicService.unbindService(mServiceConection);
-        isBound = false;
-        Log.d(TAG, "unbindService");
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG, "Service is playing: " + mMusicService.isPlaying());
+        Log.d(TAG, "isBound: " + isBound);
+        if(isBound && !mMusicService.isPlaying()) {
+            getActivity().unbindService(mServiceConection);
+        }
     }
 
     public static MusicPlayerFragment newInstance(String path) {

@@ -4,6 +4,7 @@ import android.app.ListFragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 
 public class ListSongsFragment extends ListFragment {
+    private static final String TAG = "ListSongFragment";
     ArrayList<Song> mSongs;
 
     @Override
@@ -38,11 +40,16 @@ public class ListSongsFragment extends ListFragment {
 
     private ArrayList<Song> getSongs() {
         ArrayList<Song> songs = new ArrayList<>();
-        File[] songsPath;
+        File songsPath;
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            songsPath = (new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Music")).listFiles();
+            //songsPath = (new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Music")).listFiles();
+            songsPath = new File("/mnt/sdcard2/Music/09-Prica_o_ljubavi_obicno_ugnjavi");
 
-            for(File f : songsPath) {
+            for(String f : songsPath.list())
+                Log.d(TAG, f);
+
+            for(File f : songsPath.listFiles()) {
+                Log.d(TAG, f.getName());
                 Mp3Info m = new Mp3Info().setMp3Path(f.getAbsolutePath());
                 songs.add(new Song(m.getAlbum(), m.getTitle(), m.getAuthor(), m.getYear(), f.getAbsolutePath()));
             }
