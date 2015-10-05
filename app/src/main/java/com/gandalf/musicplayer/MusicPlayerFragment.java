@@ -26,22 +26,36 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
     SeekBar mTimeElapsed;
 
     @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "Bound: " + isBound);
-        if(!isBound) {
-            Log.d(TAG, "binding service");
-            mSongPath = getArguments().getString(EXTRA_SONG_PATH);
-            Toast.makeText(getActivity(), mSongPath, Toast.LENGTH_LONG).show();
-            Intent i = new Intent(getActivity(), MusicService.class);
-            getActivity().bindService(i, mServiceConection, Context.BIND_AUTO_CREATE);
-        }
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume() isBound: " + isBound);
+        if(!isBound) {
+            mSongPath = getArguments().getString(EXTRA_SONG_PATH);
+            Toast.makeText(getActivity(), mSongPath, Toast.LENGTH_LONG).show();
+            bindService();
+        }
+    }
+
+    private void bindService() {
+        Log.d(TAG, "binding service");
+        Intent i = new Intent(getActivity(), MusicService.class);
+        getActivity().startService(i);
+        getActivity().bindService(i, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void unbindService(boolean stop) {
+        if(isBound) {
+            getActivity().unbindService(mServiceConnection);
+            if(stop) {
+                getActivity().stopService(new Intent(getActivity(), MusicService.class));
+            }
+        }
     }
 
     @Nullable
@@ -64,7 +78,7 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
         return v;
     }
 
-    ServiceConnection mServiceConection = new ServiceConnection() {
+    ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mBinder = (MusicService.MusicBinder) service;
@@ -78,8 +92,6 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
         @Override
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
-            mMusicService = null;
-            mBinder = null;
             Log.d(TAG, "disconnected");
         }
     };
@@ -113,11 +125,13 @@ public class MusicPlayerFragment extends Fragment implements View.OnClickListene
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG, "Service is playing: " + mMusicService.isPlaying());
-        Log.d(TAG, "isBound: " + isBound);
-        if(isBound && !mMusicService.isPlaying()) {
-            getActivity().unbindService(mServiceConection);
-        }
+        unbindService(false);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unbindService(true);
     }
 
     public static MusicPlayerFragment newInstance(String path) {

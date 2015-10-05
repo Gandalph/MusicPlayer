@@ -4,13 +4,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MusicService extends Service {
@@ -18,7 +16,7 @@ public class MusicService extends Service {
     IBinder mBinder = new MusicBinder();
     MediaPlayer mMusicPlayer = null;
     Handler mHandler = new Handler();
-    String mCurrentTrack;
+    String mCurrentTrack = null;
     MusicPlayerFragment mMusicPlayerFragment;
 
     @Nullable
@@ -43,8 +41,7 @@ public class MusicService extends Service {
         Log.d(TAG, "play");
         if(mMusicPlayer != null) {
             mMusicPlayer.start();
-            mMusicPlayerFragment.setMaxSeekBar(mMusicPlayer.getDuration() / 60);
-            mHandler.postDelayed(updateTime, 100);
+            setUpAndStartSeekBar();
         }
     }
 
@@ -68,32 +65,46 @@ public class MusicService extends Service {
     }
 
     public void setTrack(String track) {
-        mCurrentTrack = track;
         try {
-            mMusicPlayer.setDataSource(track);
-            mMusicPlayer.prepare();
+            if(!track.equals(mCurrentTrack)) {
+                Log.d(TAG, "setTrack if");
+                mCurrentTrack = track;
+                mMusicPlayer.reset();
+                mMusicPlayer.setDataSource(mCurrentTrack);
+                mMusicPlayer.prepare();
+            }
+            else {
+                Log.d(TAG, "setTrack else");
+                setUpAndStartSeekBar();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    void setUpAndStartSeekBar() {
+        Log.d(TAG, "duration: " + mMusicPlayer.getDuration() / 60);
+        mMusicPlayerFragment.setMaxSeekBar(mMusicPlayer.getDuration() / 60);
+        mHandler.postDelayed(updateTime, 100);
     }
 
     private Runnable updateTime = new Runnable() {
         @Override
         public void run() {
             int duration = mMusicPlayer.getCurrentPosition() / 60;
-            Log.d(TAG, "Time: " + duration);
+            //Log.d(TAG, "current position: " + duration);
             mMusicPlayerFragment.updateSeekBar(duration);
             mHandler.postDelayed(this, 1000);
         }
     };
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public void onDestroy() {
+        super.onDestroy();
         if(mMusicPlayer != null) {
             mHandler.removeCallbacks(updateTime);
             mMusicPlayer.release();
             mMusicPlayer = null;
         }
-        return super.onUnbind(intent);
     }
 }

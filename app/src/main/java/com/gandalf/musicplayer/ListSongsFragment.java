@@ -42,11 +42,11 @@ public class ListSongsFragment extends ListFragment {
         ArrayList<Song> songs = new ArrayList<>();
         File songsPath;
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            //songsPath = (new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Music")).listFiles();
-            songsPath = new File("/mnt/sdcard2/Music/09-Prica_o_ljubavi_obicno_ugnjavi");
+            songsPath = (new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Music"));
+            //songsPath = new File("/mnt/sdcard2/Music/09-Prica_o_ljubavi_obicno_ugnjavi");
 
-            for(String f : songsPath.list())
-                Log.d(TAG, f);
+//            for(String f : songsPath.list())
+//                Log.d(TAG, f);
 
             for(File f : songsPath.listFiles()) {
                 Log.d(TAG, f.getName());
