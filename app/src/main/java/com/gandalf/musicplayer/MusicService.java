@@ -7,12 +7,11 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import java.io.IOException;
 
 public class MusicService extends Service {
-    private static final String TAG = "MusicService";
+//    private static final String TAG = "MusicService";
     IBinder mBinder = new MusicBinder();
     MediaPlayer mMusicPlayer = null;
     Handler mHandler = new Handler();
@@ -38,61 +37,63 @@ public class MusicService extends Service {
     }
 
     public void playTrack() {
-        Log.d(TAG, "play");
         if(mMusicPlayer != null) {
             mMusicPlayer.start();
-            setUpAndStartSeekBar();
         }
     }
 
     public void pauseTrack() {
-        Log.d(TAG, "pause");
         if(mMusicPlayer != null && mMusicPlayer.isPlaying())
             mMusicPlayer.pause();
         mHandler.removeCallbacks(updateTime);
     }
 
+    private void nextPrevious(String trackPath) {
+        setTrack(trackPath);
+        playTrack();
+        mMusicPlayerFragment.setCurrentTrackName(trackPath);
+    }
+
     public void nextTrack() {
-        Log.d(TAG, "next");
+        String nextTrack = SongsLab.instance(getBaseContext()).getNextTrack(mCurrentTrack);
+        if(nextTrack != null) {
+            nextPrevious(nextTrack);
+        }
     }
 
     public void previousTrack() {
-        Log.d(TAG, "previous");
-    }
-
-    public boolean isPlaying() {
-        return mMusicPlayer.isPlaying();
+        String previousTrack = SongsLab.instance(getBaseContext()).getPreviousTrack(mCurrentTrack);
+        if(previousTrack != null) {
+            nextPrevious(previousTrack);
+        }
     }
 
     public void setTrack(String track) {
         try {
             if(!track.equals(mCurrentTrack)) {
-                Log.d(TAG, "setTrack if");
                 mCurrentTrack = track;
                 mMusicPlayer.reset();
                 mMusicPlayer.setDataSource(mCurrentTrack);
                 mMusicPlayer.prepare();
-            }
-            else {
-                Log.d(TAG, "setTrack else");
-                setUpAndStartSeekBar();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    void setUpAndStartSeekBar() {
-        Log.d(TAG, "duration: " + mMusicPlayer.getDuration() / 60);
+    public void seekTo(int msec) {
+        mMusicPlayer.seekTo(msec);
+    }
+
+    public void setUpAndStartSeekBar() {
         mMusicPlayerFragment.setMaxSeekBar(mMusicPlayer.getDuration() / 60);
-        mHandler.postDelayed(updateTime, 100);
+        mHandler.postDelayed(updateTime, 1000);
     }
 
     private Runnable updateTime = new Runnable() {
         @Override
         public void run() {
-            int duration = mMusicPlayer.getCurrentPosition() / 60;
-            //Log.d(TAG, "current position: " + duration);
+            long duration = mMusicPlayer.getCurrentPosition();
             mMusicPlayerFragment.updateSeekBar(duration);
             mHandler.postDelayed(this, 1000);
         }

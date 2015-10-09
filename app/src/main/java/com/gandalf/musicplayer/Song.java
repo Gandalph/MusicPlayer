@@ -1,5 +1,6 @@
 package com.gandalf.musicplayer;
 
+@SuppressWarnings("ALL")
 public class Song {
     private String mTitle;
     private String mAuthor;
@@ -13,6 +14,17 @@ public class Song {
         mAuthor = author;
         mYear = year;
         mSongPath = path;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof Song) {
+            Song song = (Song) o;
+            if (song.mSongPath.compareTo(this.mSongPath) == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getTitle() {
